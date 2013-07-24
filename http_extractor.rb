@@ -1,5 +1,6 @@
 require 'csv'
 require 'pp'
+require 'longurl'
 
 #check whether user is in directory the file is in
 puts 'What is the name of the file you want to work with? (Include the .csv extension.)'
@@ -9,7 +10,7 @@ if !File.exists?(file_name)
 end
 
 #since the file exists in that folder, open it
-File.open(file_name, 'r', :headers => :first_row)
+#File.open(file_name, 'r', :headers => :first_row)
 #make array to store http links
 http_array = []
 
@@ -30,6 +31,7 @@ CSV.foreach(file_name) do |row|
 		strings.each do |substring|
 			#if the strings in the array include a hyperlink and are the correct length...
 			if substring.include?('http://t.co/') && substring.length == 20
+				puts "if 1 #{substring}"
 				http_array.push(substring)
 			#but if string doesn't start with http (i.e., there are other characters before the link begins)
 			elsif substring.include?('http://t.co/') && substring.length != 20 && substring.initial != 'h'
@@ -40,13 +42,19 @@ CSV.foreach(file_name) do |row|
 					#chop string down to 20 chars
 					partitioned_substring = partitioned_substring[0...-(partitioned_substring.length-20)]
 					http_array.push(partitioned_substring)
+					puts "elsif if #{partitioned_substring}"
 				#otherwise, just add string to array
 				else
+					puts "elsif else #{partitioned_substring}"
 					http_array.push(partitioned_substring)
 				end
 			elsif substring.include?('http://t.co/') && substring.length != 20 && substring.initial == 'h'
-				substring = substring[0...-(substring.length-20)]
-				http_array.push(substring)
+				if substring.length > 20
+					substring = substring[0...-(substring.length-20)]
+					http_array.push(substring)
+				else
+					substring = ''
+				end
 			end
 		end
 	end
