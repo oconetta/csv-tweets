@@ -31,7 +31,6 @@ CSV.foreach(file_name) do |row|
 		strings.each do |substring|
 			#if the strings in the array include a hyperlink and are the correct length...
 			if substring.include?('http://t.co/') && substring.length == 20
-				puts "if 1 #{substring}"
 				http_array.push(substring)
 			#but if string doesn't start with http (i.e., there are other characters before the link begins)
 			elsif substring.include?('http://t.co/') && substring.length != 20 && substring.initial != 'h'
@@ -42,10 +41,8 @@ CSV.foreach(file_name) do |row|
 					#chop string down to 20 chars
 					partitioned_substring = partitioned_substring[0...-(partitioned_substring.length-20)]
 					http_array.push(partitioned_substring)
-					puts "elsif if #{partitioned_substring}"
 				#otherwise, just add string to array
 				else
-					puts "elsif else #{partitioned_substring}"
 					http_array.push(partitioned_substring)
 				end
 			elsif substring.include?('http://t.co/') && substring.length != 20 && substring.initial == 'h'
@@ -60,6 +57,14 @@ CSV.foreach(file_name) do |row|
 	end
 end
 
+#i = 0
+#expanded_links = []
+#http_array.each do |link|
+#	expanded_links[i] = LongURL.expand(link)
+#	i += 1
+#end
+
+#puts expanded_links
 #go through http_array
 #expand links
 #count # of times the same link occurs
