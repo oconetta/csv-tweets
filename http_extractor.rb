@@ -45,11 +45,8 @@ CSV.foreach(file_name) do |row|
 					http_array.push(partitioned_substring)
 				end
 			elsif substring.include?('http://t.co/') && substring.length != 20 && substring.initial == 'h'
-				#puts "Original substring in second elsif: #{substring}"
-				#cut extraneous characters from end of string
-				#add newly cut string to array
-				#don't push the shorter links (under 20 chars) to array
-				#puts "Substring after slice: #{substring}"
+				substring = substring[0...-(substring.length-20)]
+				http_array.push(substring)
 			end
 		end
 	end
