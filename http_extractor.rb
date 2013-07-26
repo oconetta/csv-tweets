@@ -3,6 +3,7 @@
 require 'csv'
 require 'pp'
 require 'longurl'
+require 'fileutils'
 
 #check whether user is in directory the file is in
 puts 'What is the name of the file you want to work with? (Include the .csv extension.)'
@@ -10,6 +11,8 @@ file_name = gets.chomp
 if !File.exists?(file_name)
 	abort('Sorry, you are not in the right directory. Change to that directory and run the script again.')
 end
+puts 'Which proposition are you working on?'
+prop_num = gets.chomp
 
 #make array to store http links
 http_array = []
@@ -63,23 +66,35 @@ puts 'Expanding links...'
 http_array.each do |link|
 	begin
 		expanded_links[i] = LongURL.expand(link)
-		if expanded_links[i] != LongURL.expand(expanded_links[i]) 
-			puts 'inside if'
+		if expanded_links[i] != LongURL.expand(expanded_links[i])
 			expanded_links[i] = LongURL.expand(expanded_links[i]) 
 		end
 		puts expanded_links[i]
 		i += 1
 		puts i
-		rescue => e
+		rescue LongURL::NetworkError => ne
+			puts 'Network error; waiting, then trying again'
+			sleep(5)
+		rescue LongURL::InvalidURL, LongURL::UnknownError => e
 			puts 'Link expanding failed; moving on'
 			puts e.message
 	end
 end
 
-#puts expanded_links
-#go through http_array
-#expand links
-#count # of times the same link occurs
-#export these data to CSV
+frequencies = Hash.new(0)
+expanded_links.each { |url| frequencies[url] += 1 }
+frequencies = frequencies.sort_by { |a, b| b }
+frequencies.reverse!
+frequencies.each { |url, frequency| puts url + ": " + frequency.to_s }
 
-#close the file
+#output hash to CSV
+path = FileUtils.pwd
+FileUtils.mkdir_p(path) unless File.exists?(path)
+new_file = File.new(path + '/Expanded_URLs_for_Prop_' + prop_num + '.csv', 'w')
+csv_string = CSV.generate do |csv|
+  frequencies.each do |key, value|
+    csv << [key, value]
+  end
+end
+new_file.write(csv_string)
+new_file.close
