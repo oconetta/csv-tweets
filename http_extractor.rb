@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'csv'
 require 'pp'
 require 'longurl'
@@ -9,8 +11,6 @@ if !File.exists?(file_name)
 	abort('Sorry, you are not in the right directory. Change to that directory and run the script again.')
 end
 
-#since the file exists in that folder, open it
-#File.open(file_name, 'r', :headers => :first_row)
 #make array to store http links
 http_array = []
 
@@ -57,12 +57,24 @@ CSV.foreach(file_name) do |row|
 	end
 end
 
-#i = 0
-#expanded_links = []
-#http_array.each do |link|
-#	expanded_links[i] = LongURL.expand(link)
-#	i += 1
-#end
+i = 0
+expanded_links = []
+puts 'Expanding links...'
+http_array.each do |link|
+	begin
+		expanded_links[i] = LongURL.expand(link)
+		if expanded_links[i] != LongURL.expand(expanded_links[i]) 
+			puts 'inside if'
+			expanded_links[i] = LongURL.expand(expanded_links[i]) 
+		end
+		puts expanded_links[i]
+		i += 1
+		puts i
+		rescue => e
+			puts 'Link expanding failed; moving on'
+			puts e.message
+	end
+end
 
 #puts expanded_links
 #go through http_array
