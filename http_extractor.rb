@@ -1,7 +1,4 @@
-#!/usr/bin/env ruby
-
 require 'csv'
-require 'pp'
 require 'longurl'
 require 'fileutils'
 
@@ -24,8 +21,12 @@ class String
 	end
 end
 
+#check for and get rid of missing/stray quotes
+text = File.read(file_name)
+text = text.gsub(/\\\"/, "\"\"")
+
 #iterate through CSV sheet
-CSV.foreach(file_name) do |row|
+CSV.parse(text, {:col_sep => ',', :quote_char => '"'}) do |row|
 	#if the row includes a hyperlink...
 	if row[4].include?('http://')
 		#split the row by whitespace; add to array
