@@ -87,7 +87,6 @@ frequencies = Hash.new(0)
 expanded_links.each { |url| frequencies[url] += 1 }
 frequencies = frequencies.sort_by { |a, b| b }
 frequencies.reverse!
-frequencies.each { |url, frequency| puts url + ": " + frequency.to_s }
 
 #output hash to CSV
 path = FileUtils.pwd
