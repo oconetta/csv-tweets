@@ -61,16 +61,17 @@ CSV.parse(text, {:col_sep => ',', :quote_char => '"'}) do |row|
 	end
 end
 
+puts 'Going to expand ' + http_array.length.to_s + ' links' 
+
 i = 0
 expanded_links = []
 puts 'Expanding links...'
 http_array.each do |link|
 	begin
 		expanded_links[i] = LongURL.expand(link)
-		if expanded_links[i] != LongURL.expand(expanded_links[i])
+		while expanded_links[i] != LongURL.expand(expanded_links[i]) do
 			expanded_links[i] = LongURL.expand(expanded_links[i]) 
 		end
-		puts expanded_links[i]
 		i += 1
 		puts i
 		rescue LongURL::NetworkError => ne
