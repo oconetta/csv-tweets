@@ -65,6 +65,7 @@ puts 'Going to expand ' + http_array.length.to_s + ' links'
 
 i = 0
 expanded_links = []
+errors = []
 puts 'Expanding links...'
 http_array.each do |link|
 	begin
@@ -73,15 +74,19 @@ http_array.each do |link|
 			expanded_links[i] = LongURL.expand(expanded_links[i]) 
 		end
 		i += 1
-		puts i
+		if i % 100 == 0 then puts i end
 		rescue LongURL::NetworkError => ne
 			puts 'Network error; waiting, then trying again'
+			errors.push(ne)
 			sleep(5)
 		rescue LongURL::InvalidURL, LongURL::UnknownError => e
 			puts 'Link expanding failed; moving on'
-			puts e.message
+			puts e.message + ' at ' + i.to_s
+			errors.push(e)
 	end
 end
+
+puts 'Expanded links with ' + errors.length.to_s + ' errors'
 
 frequencies = Hash.new(0)
 expanded_links.each { |url| frequencies[url] += 1 }

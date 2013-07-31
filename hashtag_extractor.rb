@@ -22,6 +22,7 @@ end
 
 #check for and get rid of missing/stray quotes
 text = File.read(file_name)
+text = text.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
 text = text.gsub(/\\\"/, "\"\"")
 
 #iterate through CSV sheet
