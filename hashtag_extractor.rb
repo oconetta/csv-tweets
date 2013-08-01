@@ -37,6 +37,7 @@ CSV.parse(text, {:col_sep => ',', :quote_char => '"'}) do |row|
 			if substring.include?('#') && substring.initial == '#'
 				#get rid of extraneous non-alphanumeric characters
 				substring = substring.gsub(/[^0-9a-z ]/i, '')
+				substring = substring.downcase
 				hashtag_array.push(substring)
 			end
 		end
