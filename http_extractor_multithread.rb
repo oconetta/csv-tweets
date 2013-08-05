@@ -1,7 +1,6 @@
 require 'csv'
 require 'longurl'
 require 'fileutils'
-require 'pp'
 
 #DEFINE METHODS
 
@@ -60,40 +59,39 @@ def extract_links(file, array)
 	return @array
 end
 
-def expand_links(array)
-	@array = array
+#method to chunk the array into a given amount of slices
+class Array
+	def expand_links
+		puts 'Going to expand ' + self.length.to_s + ' links' 
+		#set counter at 0
+		i = 0
+		#set up arrays for expanded hyperlinks and errors
+		@expanded = []
+		@errors = []
 
-	puts 'Going to expand ' + @array.length.to_s + ' links' 
+		puts 'Expanding links...'
 
-	#set counter at 0
-	i = 0
-	#set up arrays for expanded hyperlinks and errors
-	@expanded = []
-	@errors = []
-
-	puts 'Expanding links...'
-
-	#go through array of hyperlinks
-	@array.each do |link|
-		begin
-			#expand links
-			@expanded[i] = LongURL.expand(link)
-			#expand link until it's expanded fully (so if first expanded link is a tinyurl link, it'll expand again)
-			while @expanded[i] != LongURL.expand(@expanded[i]) do
-				@expanded[i] = LongURL.expand(@expanded[i]) 
-			end
-			i += 1
-			#prints progress occasionally
-			if i % 100 == 0 then puts i end
-			#handle errors from API so they don't crash the program
-			rescue LongURL::NetworkError => ne
-				puts 'Network error; waiting, then trying again'
-				@errors.push(ne)
-				sleep(5)
-			rescue LongURL::InvalidURL, LongURL::UnknownError => e
-				puts 'Link expanding failed; moving on'
-				puts e.message + ' at ' + i.to_s
-				@errors.push(e)
+		#go through array of hyperlinks
+		self.each do |link|
+			begin
+				#expand links
+				@expanded[i] = LongURL.expand(link)
+				#expand link until it's expanded fully (so if first expanded link is a tinyurl link, it'll expand again)
+				while @expanded[i] != LongURL.expand(@expanded[i]) do
+					@expanded[i] = LongURL.expand(@expanded[i]) 
+				end
+				i += 1
+				#prints progress occasionally
+				if i % 100 == 0 then puts i end
+				#handle errors from API so they don't crash the program
+				rescue LongURL::NetworkError => ne
+					puts 'Network error; waiting, then trying again'
+					@errors.push(ne)
+					sleep(5)
+				rescue LongURL::InvalidURL, LongURL::UnknownError => e
+					puts 'Link expanding failed; moving on'
+					puts e.message + ' at ' + i.to_s
+					@errors.push(e)
 		end
 	end
 	#shows number of errors that occurred while process ran
@@ -101,8 +99,6 @@ def expand_links(array)
 	return @expanded
 end
 
-#method to chunk the array into a given amount of slices
-class Array
 	def chunk_by(num_slices)
 		@num_slices = num_slices
 		#returns an array of arrays
@@ -116,35 +112,36 @@ class Array
 			self.each_slice(half_length).to_a
 		end
 	end
-end
 
-#method to sort frequencies of expanded links from array and return sorted hash
-def sort_by_frequency(array)
-	@array = array
-	frequencies = Hash.new(0)
-	@array.each { |url| frequencies[url] += 1 }
-	frequencies = frequencies.sort_by { |a, b| b }
-	frequencies.reverse!
-	return frequencies
+	def sort_by_frequency
+		frequencies = Hash.new(0)
+		self.each { |url| frequencies[url] += 1 }
+		frequencies = frequencies.sort_by { |a, b| b }
+		frequencies = Hash[frequencies.reverse!]
+		return frequencies
+	end
 end
 
 #method to write results of extraction and sorting to file
-def write_to_CSV(hash)
-	@hash = hash
-	path = FileUtils.pwd
-	FileUtils.mkdir_p(path) unless File.exists?(path)
-	new_file = File.new(path + '/Expanded_URLs_for_Prop_' + prop_num + '.csv', 'w')
-	csv_string = CSV.generate do |csv|
-	  frequencies.each do |key, value|
-	    csv << [key, value]
-	  end
-	end
-	new_file.write(csv_string)
-	new_file.close
-	if File.exists?(path)
-		puts 'CSV export successful!'
-	else
-		puts 'CSV export failed'
+class Hash
+	def write_to_CSV
+		puts 'Which proposition are you working on?'
+		prop_num = gets.chomp
+		path = FileUtils.pwd
+		FileUtils.mkdir_p(path) unless File.exists?(path)
+		new_file = File.new(path + '/Expanded_URLs_for_Prop_' + prop_num + '.csv', 'w')
+		csv_string = CSV.generate do |csv|
+		  self.each do |key, value|
+		    csv << [key, value]
+		  end
+		end
+		new_file.write(csv_string)
+		new_file.close
+		if File.exists?(path)
+			puts 'CSV export successful!'
+		else
+			puts 'CSV export failed'
+		end
 	end
 end
 
@@ -156,8 +153,6 @@ file_name = gets.chomp
 if !File.exists?(file_name)
 	abort('Sorry, you are not in the right directory. Change to that directory and run the script again.')
 end
-puts 'Which proposition are you working on?'
-prop_num = gets.chomp
 
 #make array to store http links; will pass to function
 http_array = []
@@ -166,23 +161,19 @@ expanded_links = []
 
 http_array = extract_links(file_name, http_array)
 http_array = http_array.chunk_by(2)
-pp http_array
 
 #expand links in multiple threads
 threads = []
-first_thread = Thread.new { expanded_links[0] = expand_links(http_array[0]) }
+first_thread = Thread.new { expanded_links[0] = http_array[0].expand_links }
 threads.push(first_thread)
-second_thread = Thread.new { expanded_links[1] = expand_links(http_array[1]) }
+second_thread = Thread.new { expanded_links[1] = http_array[1].expand_links }
 threads.push(second_thread)
 
 #join threads
 threads.each do |thr|
-	t1 = Time.now
 	thr.join
-	t2 = Time.now
-	puts t2-t1
 end
 
 expanded_links = expanded_links.flatten
 expanded_links = expanded_links.sort_by_frequency
-write_to_CSV(expanded_links)
+expanded_links.write_to_CSV
